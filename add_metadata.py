@@ -33,6 +33,7 @@ for d in target_dir_list:
     if not os.path.exists(d):
         os.makedirs(d)
 
+metadata_pattern = re.compile("^---\n")
 contributor_pattern = re.compile("\n?\#+?\s*?[Cc]ontribut.+?\n")
 contributor_table_pattern = re.compile("\n\|\s*?\**?[Rr]ole.*?[Nn]ame.*?\|\w*?\n\|[\s\-\|]*?\n")
 h1_pattern = re.compile("^\#.+?\n")
@@ -42,16 +43,18 @@ reviewer_row_pattern = re.compile("\|\s*?[Rr]evi.+?\|(.+?)\|\n")
 li_tag_pattern = re.compile("\<[Ll]i\/?\>")
 tech_writer_row_pattern = re.compile("\|\s*?[Tt]ech.+[Ww]ri.+?\|\n")
 
+counter = 0
+
 #file_list = [f for f in os.listdir(base_dir) if f.endswith('.md')]
 for f in file_list:
     source = os.path.join(base_dir, f[2:])
-    print("..................................", source)
 
     with open(source, "r", encoding='utf-8') as md_file:
         lines = md_file.read()
         has_contributor_table = contributor_pattern.search(lines)
+        has_metadata = contributor_pattern.search(lines)
 
-        if has_contributor_table:
+        if has_contributor_table and has_metadata != None:
             metadata = "---\n"
             title = "title: "
             h1 = h1_pattern.search(lines)
@@ -59,7 +62,7 @@ for f in file_list:
                 title += h1.group(0)[1:]
                 lines = lines.replace(h1.group(0), "", 1)
             else:
-                title += f.replace("-", " ")[:-3]
+                title += f.split("\\")[-1].replace("-", " ")[:-3]
 
             metadata += title + "\n"
         
@@ -113,3 +116,6 @@ for f in file_list:
             target = os.path.join(destination, f[2:])
             with open(target, "w", encoding='utf-8') as md_file:
                     md_file.write(metadata + lines)
+                    counter += 1
+
+print("Converted", counter, "files.")
